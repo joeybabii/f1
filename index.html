@@ -1,0 +1,495 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <meta name="theme-color" content="#101827" />
+  <title>Castle Breakers 3D</title>
+  <style>
+:root{
+  --bg:#0b1020;
+  --panel:rgba(10,16,30,.78);
+  --white:#f6f8ff;
+  --muted:#aab5cd;
+  --blue:#42a5ff;
+  --blue2:#1278ff;
+  --red:#ff5f6d;
+  --red2:#ff2d55;
+  --yellow:#ffd34d;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--white)}
+#game{position:fixed;inset:0;touch-action:none}
+canvas{display:block;width:100%;height:100%}
+.hidden{display:none!important}
+.hud{position:fixed;inset:0;pointer-events:none;padding:max(12px,env(safe-area-inset-top)) 12px max(12px,env(safe-area-inset-bottom));display:flex;flex-direction:column;justify-content:space-between}
+.topbar{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;max-width:820px;width:100%;margin:0 auto}
+.player-card{display:flex;align-items:center;gap:8px;background:rgba(11,17,31,.72);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:8px 10px;backdrop-filter:blur(10px);box-shadow:0 10px 30px rgba(0,0,0,.2)}
+.player-card.red{justify-content:flex-end;text-align:right}
+.player-card b{display:block;font-size:12px;letter-spacing:.08em}.player-card small{display:block;color:var(--muted);font-size:10px;margin-top:2px}.dot{width:12px;height:12px;border-radius:50%;background:var(--blue);box-shadow:0 0 18px var(--blue)}.red .dot{background:var(--red);box-shadow:0 0 18px var(--red)}
+.turn-pill{font-size:11px;font-weight:900;letter-spacing:.12em;background:rgba(255,255,255,.92);color:#0d1528;border-radius:999px;padding:8px 12px;white-space:nowrap}
+.controls{pointer-events:auto;max-width:760px;width:100%;margin:0 auto;background:linear-gradient(180deg,rgba(18,27,45,.9),rgba(8,14,28,.94));border:1px solid rgba(255,255,255,.12);border-radius:22px;padding:12px;box-shadow:0 18px 60px rgba(0,0,0,.42);backdrop-filter:blur(16px)}
+.weapon-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.weapon{border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.055);color:var(--muted);border-radius:12px;padding:9px 8px;font-weight:800;font-size:11px;display:flex;justify-content:center;align-items:center;gap:6px}.weapon span{font-size:15px}.weapon.active{color:#07101f;background:linear-gradient(180deg,#fff,#dbeaff);border-color:white;box-shadow:0 6px 20px rgba(88,163,255,.18)}
+.slider-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 2px 8px}.slider-row label{font-size:10px;font-weight:900;letter-spacing:.08em;color:var(--muted)}.slider-row b{float:right;color:white;font-size:11px}.slider-row input{width:100%;margin-top:7px;accent-color:var(--yellow)}
+.action-row{display:grid;grid-template-columns:1fr 1.4fr 1fr;gap:8px}.action-row button{border:0;border-radius:14px;padding:13px 8px;font-weight:1000;letter-spacing:.06em}.move{background:rgba(255,255,255,.08);color:white;border:1px solid rgba(255,255,255,.1)!important}.fire{background:linear-gradient(180deg,#ffe56a,#ffbd1f);color:#231600;font-size:15px;box-shadow:0 8px 24px rgba(255,191,31,.26)}.action-row button:disabled,.weapon:disabled{opacity:.35;filter:grayscale(1)}
+.hint{text-align:center;color:#748198;font-size:9px;margin-top:8px;letter-spacing:.02em}
+.overlay{position:fixed;inset:0;z-index:10;display:grid;place-items:center;background:radial-gradient(circle at 50% 35%,rgba(65,120,255,.12),rgba(5,9,18,.74) 55%,rgba(5,9,18,.92));padding:20px}.panel{width:min(430px,92vw);background:linear-gradient(180deg,rgba(18,27,47,.96),rgba(8,14,28,.98));border:1px solid rgba(255,255,255,.14);border-radius:28px;padding:28px;text-align:center;box-shadow:0 30px 100px rgba(0,0,0,.5)}.eyebrow{font-size:10px;letter-spacing:.22em;font-weight:900;color:#8fa2c6;margin-bottom:10px}.panel h1{font-size:56px;line-height:.8;margin:12px 0 18px;letter-spacing:-.06em}.panel h1 span{color:#ffd34d}.panel h2{font-size:44px;margin:10px 0 12px;letter-spacing:-.04em}.panel p{color:#b4c1d7;line-height:1.5;font-size:14px}.panel small{display:block;margin-top:14px;color:#60708f;font-size:10px}.start-btn{margin-top:10px;width:100%;border:0;border-radius:15px;padding:15px;background:linear-gradient(180deg,#59b8ff,#247cff);color:white;font-size:14px;font-weight:1000;letter-spacing:.08em;box-shadow:0 12px 35px rgba(36,124,255,.3)}
+@media(max-width:560px){.hud{padding-left:8px;padding-right:8px}.topbar{gap:6px}.player-card{border-radius:13px;padding:7px 8px}.turn-pill{padding:7px 8px;font-size:9px}.controls{border-radius:18px;padding:10px}.panel{padding:24px}.panel h1{font-size:50px}.hint{display:none}}
+
+</style>
+</head>
+<body>
+  <div id="game"></div>
+
+  <div id="hud" class="hud hidden">
+    <div class="topbar">
+      <div class="player-card blue">
+        <span class="dot"></span>
+        <div><b>YOU</b><small id="playerCore">CORE 320</small></div>
+      </div>
+      <div class="turn-pill" id="turnLabel">YOUR TURN</div>
+      <div class="player-card red">
+        <div><b>RIVAL</b><small id="enemyCore">CORE 320</small></div>
+        <span class="dot"></span>
+      </div>
+    </div>
+
+    <div class="controls" id="controls">
+      <div class="weapon-row">
+        <button class="weapon active" data-weapon="cannon"><span>●</span>Cannon</button>
+        <button class="weapon" data-weapon="bomb"><span>✹</span>Bomb</button>
+        <button class="weapon" data-weapon="drill"><span>◆</span>Drill</button>
+      </div>
+      <div class="slider-row">
+        <label>ANGLE <b id="angleValue">43°</b><input id="angle" type="range" min="18" max="72" value="43" /></label>
+        <label>POWER <b id="powerValue">56%</b><input id="power" type="range" min="20" max="100" value="56" /></label>
+      </div>
+      <div class="action-row">
+        <button id="moveLeft" class="move">◀ MOVE</button>
+        <button id="fire" class="fire">FIRE</button>
+        <button id="moveRight" class="move">MOVE ▶</button>
+      </div>
+      <div class="hint">Adjust angle + power, then fire. Move sideways to dodge the next shot.</div>
+    </div>
+  </div>
+
+  <div id="start" class="overlay">
+    <div class="panel">
+      <div class="eyebrow">PLAYABLE 3D PROTOTYPE</div>
+      <h1>CASTLE<br><span>BREAKERS</span></h1>
+      <p>Turn-based artillery. Destructible castles. One clean shot can collapse the whole defense.</p>
+      <button id="startBtn" class="start-btn">START BATTLE</button>
+      <small>Original prototype inspired by destructible 1v1 castle battlers.</small>
+    </div>
+  </div>
+
+  <div id="result" class="overlay hidden">
+    <div class="panel result-panel">
+      <div class="eyebrow">MATCH OVER</div>
+      <h2 id="resultTitle">VICTORY</h2>
+      <p id="resultCopy">Enemy core destroyed.</p>
+      <button id="restartBtn" class="start-btn">REMATCH</button>
+    </div>
+  </div>
+
+  <div id="loadError" class="overlay hidden">
+    <div class="panel">
+      <h2>Couldn’t load the 3D engine</h2>
+      <p>This build loads Three.js from the web. Open it while connected to the internet.</p>
+    </div>
+  </div>
+
+  <script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js';
+
+const root = document.getElementById('game');
+const hud = document.getElementById('hud');
+const startOverlay = document.getElementById('start');
+const resultOverlay = document.getElementById('result');
+const loadError = document.getElementById('loadError');
+const startBtn = document.getElementById('startBtn');
+const restartBtn = document.getElementById('restartBtn');
+const fireBtn = document.getElementById('fire');
+const moveLeft = document.getElementById('moveLeft');
+const moveRight = document.getElementById('moveRight');
+const angleSlider = document.getElementById('angle');
+const powerSlider = document.getElementById('power');
+const angleValue = document.getElementById('angleValue');
+const powerValue = document.getElementById('powerValue');
+const turnLabel = document.getElementById('turnLabel');
+const playerCoreText = document.getElementById('playerCore');
+const enemyCoreText = document.getElementById('enemyCore');
+const resultTitle = document.getElementById('resultTitle');
+const resultCopy = document.getElementById('resultCopy');
+const weaponButtons = [...document.querySelectorAll('.weapon')];
+
+let scene, camera, renderer, clock;
+let playerCastle, enemyCastle;
+let trajectoryLine;
+let projectile = null;
+let debris = [];
+let sparks = [];
+let turn = 'player';
+let activeWeapon = 'cannon';
+let battleStarted = false;
+let matchOver = false;
+let shake = 0;
+let audioCtx = null;
+let lastTime = 0;
+
+const GRAVITY = 9.8;
+const BLOCK = 1.18;
+const weapons = {
+  cannon: {radius:.34, blast:2.15, damage:118, speedMul:1.00, color:0x222936},
+  bomb:   {radius:.43, blast:3.05, damage:100, speedMul:.92, color:0xff8f2b},
+  drill:  {radius:.28, blast:1.35, damage:185, speedMul:1.12, color:0x90e3ff},
+};
+
+function init(){
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x9fd7ff);
+  scene.fog = new THREE.Fog(0x9fd7ff, 35, 72);
+
+  camera = new THREE.PerspectiveCamera(45, innerWidth/innerHeight, .1, 140);
+  camera.position.set(0, 11.5, 28);
+  camera.lookAt(0, 4.2, 0);
+
+  renderer = new THREE.WebGLRenderer({antialias:true, powerPreference:'high-performance'});
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 1.8));
+  renderer.setSize(innerWidth,innerHeight);
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  root.appendChild(renderer.domElement);
+
+  clock = new THREE.Clock();
+  addLights();
+  addWorld();
+  createTrajectory();
+  resetBattle();
+  bindUI();
+  onResize();
+  animate();
+}
+
+function addLights(){
+  const hemi = new THREE.HemisphereLight(0xeef8ff,0x46515f,2.4); scene.add(hemi);
+  const sun = new THREE.DirectionalLight(0xffffff,3.4); sun.position.set(-13,24,15); sun.castShadow=true;
+  sun.shadow.mapSize.set(2048,2048); sun.shadow.camera.left=-32; sun.shadow.camera.right=32; sun.shadow.camera.top=24; sun.shadow.camera.bottom=-12;
+  scene.add(sun);
+}
+
+function addWorld(){
+  const groundMat = new THREE.MeshStandardMaterial({color:0x6fbb62,roughness:.95});
+  const ground = new THREE.Mesh(new THREE.BoxGeometry(70,1,28),groundMat); ground.position.y=-.5; ground.receiveShadow=true; scene.add(ground);
+  const lane = new THREE.Mesh(new THREE.BoxGeometry(42,.08,9),new THREE.MeshStandardMaterial({color:0xd8c38e,roughness:.9})); lane.position.y=.04; lane.receiveShadow=true; scene.add(lane);
+
+  // Stylized distant cliffs / bushes for depth.
+  const geo = new THREE.DodecahedronGeometry(1,0);
+  for(let i=0;i<34;i++){
+    const m = new THREE.Mesh(geo,new THREE.MeshStandardMaterial({color:i%3===0?0x5d9f55:0x78b867,roughness:1}));
+    const side = i%2?1:-1; const x=-31+Math.random()*62; const z=side*(8+Math.random()*7); const s=.8+Math.random()*1.7;
+    m.scale.set(s,1.2*s,s); m.position.set(x,s*.7,z); m.rotation.y=Math.random()*Math.PI; m.receiveShadow=true; scene.add(m);
+  }
+
+  // Flags in center.
+  const pole = new THREE.Mesh(new THREE.CylinderGeometry(.06,.06,3.6,8),new THREE.MeshStandardMaterial({color:0x555e69})); pole.position.set(0,1.8,-5.4); scene.add(pole);
+  const flag = new THREE.Mesh(new THREE.PlaneGeometry(1.45,.75),new THREE.MeshStandardMaterial({color:0xffd24a,side:THREE.DoubleSide})); flag.position.set(.72,3.1,-5.4); flag.rotation.y=Math.PI/2; scene.add(flag);
+}
+
+function makeMaterial(color){ return new THREE.MeshStandardMaterial({color,roughness:.74,metalness:.02}); }
+
+function createCastle(team){
+  const group = new THREE.Group();
+  group.position.set(team==='player'?-12:12,0,0);
+  scene.add(group);
+  const blue = team==='player';
+  const baseColor = blue?0x2f8fff:0xff4e62;
+  const darkColor = blue?0x1661c8:0xc5283c;
+  const lightColor = blue?0x78c4ff:0xff9a9f;
+  const blocks = [];
+
+  // Base platform.
+  const base = new THREE.Mesh(new THREE.BoxGeometry(6.8,.55,6.6),makeMaterial(blue?0x1d4f87:0x7c2930));
+  base.position.y=.29; base.castShadow=base.receiveShadow=true; group.add(base);
+
+  function addBlock(x,y,z,{core=false,hp=72,color=baseColor,scale=[1,1,1]}={}){
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(BLOCK*scale[0],BLOCK*scale[1],BLOCK*scale[2]),makeMaterial(color));
+    mesh.position.set(x,y,z); mesh.castShadow=mesh.receiveShadow=true;
+    mesh.userData={hp, maxHp:hp, core, alive:true, team, baseColor:color};
+    group.add(mesh); blocks.push(mesh); return mesh;
+  }
+
+  // Front/rear towers and walls. Intentional holes make chain collapses possible.
+  const zs=[-2.3,-1.15,0,1.15,2.3];
+  for(let level=0;level<4;level++){
+    for(let zi=0;zi<zs.length;zi++){
+      if(level===2 && (zi===1||zi===3)) continue;
+      const col = (level+zi)%3===0?lightColor:baseColor;
+      addBlock(blue?.35:-.35,1.0+level*1.18,zs[zi],{color:col,hp:66});
+    }
+  }
+  for(const z of [-2.3,2.3]){
+    for(let level=0;level<5;level++) addBlock(blue?-1.05:1.05,1.0+level*1.18,z,{color:level%2?darkColor:baseColor,hp:74});
+  }
+  // Core tucked behind the wall.
+  const core=addBlock(blue?-1.0:1.0,1.58,0,{core:true,hp:320,color:blue?0x68d7ff:0xffd0d2,scale:[1.35,1.35,1.35]});
+  // Crown blocks.
+  for(const z of [-1.8,0,1.8]) addBlock(blue?.2:-.2,5.65,z,{color:darkColor,hp:86,scale:[1.05,.8,1.05]});
+
+  // Champion figures.
+  const units=[];
+  [-1.8,0,1.8].forEach((z,i)=>{
+    const unit = makeChampion(blue?0x173c72:0x74202a, blue?0x54b6ff:0xff6976);
+    unit.position.set(blue?-1.75:1.75,6.1,z); unit.scale.setScalar(i===1?1.04:.9); group.add(unit); units.push(unit);
+  });
+
+  // Cannon visual and muzzle helper.
+  const cannon = new THREE.Group();
+  const wheelMat=makeMaterial(0x1d2430);
+  for(const z of [-.62,.62]){ const wheel=new THREE.Mesh(new THREE.CylinderGeometry(.5,.5,.22,16),wheelMat); wheel.rotation.x=Math.PI/2; wheel.position.set(0,.5,z); wheel.castShadow=true; cannon.add(wheel); }
+  const barrel=new THREE.Mesh(new THREE.CylinderGeometry(.22,.3,2.6,14),makeMaterial(blue?0x1c5ea9:0x9f2b37)); barrel.rotation.z=Math.PI/2; barrel.position.set(blue?1.2:-1.2,1.15,0); barrel.castShadow=true; cannon.add(barrel);
+  cannon.position.set(blue?2.0:-2.0,.2,0); group.add(cannon);
+  const muzzle=new THREE.Object3D(); muzzle.position.set(blue?4.4:-4.4,1.35,0); group.add(muzzle);
+
+  return {team,group,blocks,core,units,cannon,muzzle,alive:true};
+}
+
+function makeChampion(bodyColor,headColor){
+  const g=new THREE.Group();
+  const body=new THREE.Mesh(new THREE.CylinderGeometry(.34,.44,.95,10),makeMaterial(bodyColor)); body.position.y=.65; body.castShadow=true; g.add(body);
+  const head=new THREE.Mesh(new THREE.SphereGeometry(.43,16,12),makeMaterial(headColor)); head.position.y=1.35; head.castShadow=true; g.add(head);
+  const eyeMat=new THREE.MeshBasicMaterial({color:0xffffff});
+  for(const z of [-.15,.15]){const e=new THREE.Mesh(new THREE.SphereGeometry(.055,8,6),eyeMat);e.position.set(.39,1.42,z);g.add(e)}
+  return g;
+}
+
+function resetBattle(){
+  if(playerCastle) destroyCastle(playerCastle);
+  if(enemyCastle) destroyCastle(enemyCastle);
+  if(projectile){scene.remove(projectile.mesh);projectile=null;}
+  for(const d of debris) scene.remove(d.mesh); debris=[];
+  for(const s of sparks) scene.remove(s.mesh); sparks=[];
+  playerCastle=createCastle('player');
+  enemyCastle=createCastle('enemy');
+  turn='player'; activeWeapon='cannon'; matchOver=false; shake=0;
+  playerCastle.group.position.z=0; enemyCastle.group.position.z=0;
+  weaponButtons.forEach(b=>b.classList.toggle('active',b.dataset.weapon==='cannon'));
+  angleSlider.value=43; powerSlider.value=56;
+  updateUI(); updateTrajectory();
+  camera.position.set(0,11.5,28); camera.lookAt(0,4.2,0);
+}
+
+function destroyCastle(c){ if(c?.group) scene.remove(c.group); }
+
+function createTrajectory(){
+  const geom=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(),new THREE.Vector3()]);
+  const mat=new THREE.LineDashedMaterial({color:0xffffff,transparent:true,opacity:.58,dashSize:.42,gapSize:.28});
+  trajectoryLine=new THREE.Line(geom,mat); trajectoryLine.computeLineDistances(); scene.add(trajectoryLine);
+}
+
+function getShotVector(castle, angleDeg, powerPct, weaponName){
+  const from=new THREE.Vector3(); castle.muzzle.getWorldPosition(from);
+  const targetCastle=castle===playerCastle?enemyCastle:playerCastle;
+  const target=new THREE.Vector3(); targetCastle.core.getWorldPosition(target);
+  const horizontal=new THREE.Vector3(target.x-from.x,0,target.z-from.z).normalize();
+  const angle=THREE.MathUtils.degToRad(angleDeg);
+  const velocity=(10.2+powerPct*.19)*weapons[weaponName].speedMul;
+  const v=horizontal.multiplyScalar(Math.cos(angle)*velocity); v.y=Math.sin(angle)*velocity;
+  return {from,velocity:v};
+}
+
+function updateTrajectory(){
+  if(!playerCastle || turn!=='player' || projectile || matchOver){trajectoryLine.visible=false;return;}
+  trajectoryLine.visible=battleStarted;
+  const {from,velocity}=getShotVector(playerCastle,+angleSlider.value,+powerSlider.value,activeWeapon);
+  const pts=[]; for(let i=0;i<44;i++){const t=i*.055;pts.push(new THREE.Vector3(from.x+velocity.x*t,from.y+velocity.y*t-.5*GRAVITY*t*t,from.z+velocity.z*t));if(pts.at(-1).y<0)break;}
+  trajectoryLine.geometry.dispose(); trajectoryLine.geometry=new THREE.BufferGeometry().setFromPoints(pts); trajectoryLine.computeLineDistances();
+}
+
+function fire(castle, angle, power, weaponName){
+  if(projectile||matchOver)return;
+  trajectoryLine.visible=false;
+  const w=weapons[weaponName]; const {from,velocity}=getShotVector(castle,angle,power,weaponName);
+  const mesh=new THREE.Mesh(new THREE.SphereGeometry(w.radius,16,12),new THREE.MeshStandardMaterial({color:w.color,roughness:.3,metalness:.25,emissive:weaponName==='bomb'?0x3a1200:0x000000,emissiveIntensity:.6}));
+  mesh.position.copy(from); mesh.castShadow=true; scene.add(mesh);
+  projectile={mesh,vel:velocity,weapon:weaponName,owner:castle,age:0};
+  sfxShot(); setControls(false);
+}
+
+function simulateProjectile(dt){
+  if(!projectile)return;
+  const p=projectile; p.age+=dt; p.vel.y-=GRAVITY*dt; const prev=p.mesh.position.clone(); p.mesh.position.addScaledVector(p.vel,dt); p.mesh.rotation.x+=dt*7; p.mesh.rotation.z+=dt*4;
+
+  // Follow shot with a soft camera pan.
+  const follow=new THREE.Vector3(p.mesh.position.x*.55,Math.max(8,p.mesh.position.y+4.5),26); camera.position.lerp(follow,1-Math.pow(.015,dt)); camera.lookAt(p.mesh.position.x*.25,Math.max(3.5,p.mesh.position.y*.42),0);
+
+  const target=p.owner===playerCastle?enemyCastle:playerCastle;
+  const hit = findCollision(p.mesh.position, weapons[p.weapon].radius, target) || findCollision(p.mesh.position,weapons[p.weapon].radius,p.owner);
+  if(hit){explode(p.mesh.position.clone(),p.weapon,hit);return;}
+  if(p.mesh.position.y<=.18){p.mesh.position.y=.18;explode(p.mesh.position.clone(),p.weapon,null);return;}
+  if(Math.abs(p.mesh.position.x)>35 || p.age>6){finishShot();}
+}
+
+function findCollision(pos,radius,castle){
+  for(const block of castle.blocks){
+    if(!block.userData.alive)continue;
+    const box=new THREE.Box3().setFromObject(block); const closest=box.clampPoint(pos,new THREE.Vector3());
+    if(closest.distanceToSquared(pos)<=radius*radius)return block;
+  }
+  return null;
+}
+
+function explode(pos,weaponName,directHit){
+  const w=weapons[weaponName];
+  if(projectile){scene.remove(projectile.mesh); projectile=null;}
+  sfxBoom(weaponName); shake=.55;
+  spawnExplosionFX(pos,w.color,w.blast);
+  const affected=[playerCastle,enemyCastle];
+  for(const castle of affected){
+    for(const block of castle.blocks){
+      if(!block.userData.alive)continue;
+      const wp=new THREE.Vector3(); block.getWorldPosition(wp); const dist=wp.distanceTo(pos);
+      if(dist<=w.blast){
+        let dmg=Math.max(0,w.damage*(1-dist/w.blast));
+        if(block===directHit)dmg*=1.35;
+        if(weaponName==='drill' && block===directHit)dmg*=1.4;
+        damageBlock(castle,block,dmg,pos);
+      }
+    }
+    checkUnsupported(castle);
+  }
+  updateUI();
+  setTimeout(()=>{ if(!matchOver) finishShot(); },460);
+}
+
+function damageBlock(castle,block,dmg,impact){
+  block.userData.hp-=dmg;
+  const ratio=Math.max(.18,block.userData.hp/block.userData.maxHp);
+  block.material.emissive=new THREE.Color(0xff7a38); block.material.emissiveIntensity=(1-ratio)*.85;
+  if(block.userData.hp<=0){
+    block.userData.alive=false;
+    const wp=new THREE.Vector3(); block.getWorldPosition(wp);
+    spawnDebris(wp,block.material.color,impact,block.userData.core?14:7);
+    block.visible=false;
+    if(block.userData.core){castle.alive=false; endMatch(castle===enemyCastle?'player':'enemy');}
+  }
+}
+
+function checkUnsupported(castle){
+  // Lightweight collapse pass: upper blocks with no nearby support below take damage.
+  const living=castle.blocks.filter(b=>b.userData.alive && !b.userData.core);
+  for(const b of living){
+    const local=b.position; if(local.y<1.8)continue;
+    const supported=living.some(o=>o!==b && o.position.y<local.y && local.y-o.position.y<1.5 && Math.abs(o.position.z-local.z)<.72 && Math.abs(o.position.x-local.x)<1.4) || (castle.core.userData.alive && Math.abs(castle.core.position.z-local.z)<1.2 && local.y-castle.core.position.y<1.8);
+    if(!supported && Math.random()<.48) damageBlock(castle,b,40,new THREE.Vector3());
+  }
+}
+
+function spawnDebris(pos,color,impact,count){
+  for(let i=0;i<count;i++){
+    const mesh=new THREE.Mesh(new THREE.BoxGeometry(.22+Math.random()*.22,.18+Math.random()*.2,.18+Math.random()*.2),new THREE.MeshStandardMaterial({color,roughness:.9}));
+    mesh.position.copy(pos).add(new THREE.Vector3((Math.random()-.5)*.6,(Math.random()-.3)*.5,(Math.random()-.5)*.6)); mesh.castShadow=true; scene.add(mesh);
+    const away=mesh.position.clone().sub(impact||pos).normalize().multiplyScalar(2+Math.random()*5); away.y=3+Math.random()*5;
+    debris.push({mesh,vel:away,life:2+Math.random()*1.8});
+  }
+}
+
+function spawnExplosionFX(pos,color,scale){
+  const colors=[0xffd36b,0xff7a2c,color];
+  for(let i=0;i<18;i++){
+    const mesh=new THREE.Mesh(new THREE.SphereGeometry(.07+Math.random()*.12,6,5),new THREE.MeshBasicMaterial({color:colors[i%colors.length],transparent:true,opacity:1}));
+    mesh.position.copy(pos);scene.add(mesh);
+    const vel=new THREE.Vector3((Math.random()-.5)*7,Math.random()*6,(Math.random()-.5)*7).multiplyScalar(.45+scale*.14);
+    sparks.push({mesh,vel,life:.45+Math.random()*.45,max:.9});
+  }
+}
+
+function updateFX(dt){
+  for(let i=debris.length-1;i>=0;i--){const d=debris[i];d.life-=dt;d.vel.y-=GRAVITY*dt;d.mesh.position.addScaledVector(d.vel,dt);d.mesh.rotation.x+=dt*5;d.mesh.rotation.z+=dt*4;if(d.mesh.position.y<.12){d.mesh.position.y=.12;d.vel.multiplyScalar(.72);d.vel.y=Math.abs(d.vel.y)*.22}if(d.life<=0){scene.remove(d.mesh);debris.splice(i,1)}}
+  for(let i=sparks.length-1;i>=0;i--){const s=sparks[i];s.life-=dt;s.vel.y-=GRAVITY*.35*dt;s.mesh.position.addScaledVector(s.vel,dt);s.mesh.material.opacity=Math.max(0,s.life/s.max);s.mesh.scale.multiplyScalar(.985);if(s.life<=0){scene.remove(s.mesh);sparks.splice(i,1)}}
+}
+
+function finishShot(){
+  if(matchOver)return;
+  if(projectile){ scene.remove(projectile.mesh); projectile=null; }
+  camera.position.lerp(new THREE.Vector3(0,11.5,28),.18);
+  turn = turn==='player'?'enemy':'player'; updateUI();
+  setControls(turn==='player');
+  if(turn==='enemy') setTimeout(aiTurn,650); else updateTrajectory();
+}
+
+function aiTurn(){
+  if(matchOver||turn!=='enemy')return;
+  // Aim for the player's core using a solvable ballistic arc, then add human-like error.
+  const from=new THREE.Vector3(); enemyCastle.muzzle.getWorldPosition(from); const target=new THREE.Vector3(); playerCastle.core.getWorldPosition(target);
+  const dist=new THREE.Vector2(target.x-from.x,target.z-from.z).length();
+  const angle=36+Math.random()*18;
+  const a=THREE.MathUtils.degToRad(angle); const idealV=Math.sqrt(Math.max(1,dist*GRAVITY/Math.sin(2*a)));
+  let power=(idealV-10.2)/.19; power+=(-9+Math.random()*18); power=THREE.MathUtils.clamp(power,25,92);
+  fire(enemyCastle,angle,power,'cannon');
+}
+
+function movePlayer(dir){
+  if(turn!=='player'||projectile||matchOver)return;
+  playerCastle.group.position.z=THREE.MathUtils.clamp(playerCastle.group.position.z+dir*1.25,-3.25,3.25);
+  updateTrajectory(); sfxMove();
+}
+
+function endMatch(winner){
+  matchOver=true; setControls(false); trajectoryLine.visible=false;
+  setTimeout(()=>{
+    resultTitle.textContent=winner==='player'?'VICTORY':'CASTLE DOWN';
+    resultCopy.textContent=winner==='player'?'You cracked the rival core.':'The rival destroyed your core.';
+    resultOverlay.classList.remove('hidden');
+  },760);
+}
+
+function updateUI(){
+  angleValue.textContent=`${angleSlider.value}°`; powerValue.textContent=`${powerSlider.value}%`;
+  const pc=Math.max(0,Math.ceil(playerCastle?.core.userData.hp||0)); const ec=Math.max(0,Math.ceil(enemyCastle?.core.userData.hp||0));
+  playerCoreText.textContent=`CORE ${pc}`; enemyCoreText.textContent=`CORE ${ec}`;
+  turnLabel.textContent=turn==='player'?'YOUR TURN':'RIVAL AIMING';
+}
+
+function setControls(enabled){
+  const can=enabled && turn==='player' && !projectile && !matchOver;
+  fireBtn.disabled=!can;moveLeft.disabled=!can;moveRight.disabled=!can;angleSlider.disabled=!can;powerSlider.disabled=!can;weaponButtons.forEach(b=>b.disabled=!can);
+}
+
+function bindUI(){
+  startBtn.addEventListener('click',()=>{battleStarted=true;startOverlay.classList.add('hidden');hud.classList.remove('hidden');initAudio();setControls(true);updateTrajectory();});
+  restartBtn.addEventListener('click',()=>{resultOverlay.classList.add('hidden');resetBattle();setControls(true);battleStarted=true;hud.classList.remove('hidden');});
+  angleSlider.addEventListener('input',()=>{updateUI();updateTrajectory()});
+  powerSlider.addEventListener('input',()=>{updateUI();updateTrajectory()});
+  fireBtn.addEventListener('click',()=>fire(playerCastle,+angleSlider.value,+powerSlider.value,activeWeapon));
+  moveLeft.addEventListener('click',()=>movePlayer(-1));moveRight.addEventListener('click',()=>movePlayer(1));
+  weaponButtons.forEach(btn=>btn.addEventListener('click',()=>{if(btn.disabled)return;activeWeapon=btn.dataset.weapon;weaponButtons.forEach(b=>b.classList.toggle('active',b===btn));updateTrajectory();sfxMove();}));
+  addEventListener('resize',onResize);
+  addEventListener('keydown',e=>{if(!battleStarted||turn!=='player')return;if(e.code==='Space'){e.preventDefault();fireBtn.click()}if(e.code==='ArrowLeft')movePlayer(-1);if(e.code==='ArrowRight')movePlayer(1);if(e.code==='ArrowUp'){angleSlider.value=Math.min(72,+angleSlider.value+2);angleSlider.dispatchEvent(new Event('input'))}if(e.code==='ArrowDown'){angleSlider.value=Math.max(18,+angleSlider.value-2);angleSlider.dispatchEvent(new Event('input'))}});
+}
+
+function onResize(){ if(!camera||!renderer)return; camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight); }
+
+function animate(){
+  requestAnimationFrame(animate); const dt=Math.min(.033,clock.getDelta()); lastTime+=dt;
+  simulateProjectile(dt); updateFX(dt);
+  // Character idle motion.
+  const t=lastTime; for(const castle of [playerCastle,enemyCastle]) if(castle) castle.units.forEach((u,i)=>{u.rotation.z=Math.sin(t*2+i)*.018;u.position.y=6.1+Math.sin(t*2.2+i)*.035});
+  if(!projectile){const desired=new THREE.Vector3(0,11.5,28);camera.position.lerp(desired,1-Math.pow(.02,dt));camera.lookAt(0,4.2,0)}
+  if(shake>0){shake=Math.max(0,shake-dt*1.7);camera.position.x+=(Math.random()-.5)*shake*.35;camera.position.y+=(Math.random()-.5)*shake*.22;}
+  renderer.render(scene,camera);
+}
+
+function initAudio(){
+  try{audioCtx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}
+}
+function sfxShot(){if(!audioCtx)return;const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type='triangle';o.frequency.setValueAtTime(150,audioCtx.currentTime);o.frequency.exponentialRampToValueAtTime(55,audioCtx.currentTime+.14);g.gain.setValueAtTime(.13,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+.17);o.connect(g).connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+.18)}
+function sfxBoom(type){if(!audioCtx)return;const dur=type==='bomb'?.45:.3;const buffer=audioCtx.createBuffer(1,audioCtx.sampleRate*dur,audioCtx.sampleRate);const data=buffer.getChannelData(0);for(let i=0;i<data.length;i++)data[i]=(Math.random()*2-1)*Math.pow(1-i/data.length,2);const src=audioCtx.createBufferSource(),filter=audioCtx.createBiquadFilter(),g=audioCtx.createGain();src.buffer=buffer;filter.type='lowpass';filter.frequency.value=type==='drill'?950:520;g.gain.value=.23;src.connect(filter).connect(g).connect(audioCtx.destination);src.start()}
+function sfxMove(){if(!audioCtx)return;const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type='sine';o.frequency.value=330;g.gain.setValueAtTime(.035,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+.07);o.connect(g).connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+.08)}
+
+try{init();}catch(err){console.error(err);loadError.classList.remove('hidden');startOverlay.classList.add('hidden');}
+
+</script>
+</body>
+</html>
